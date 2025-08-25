@@ -379,6 +379,11 @@ class APWorldDatesGame {
             this.matches.delete(eventIndex);
         });
 
+        // Hide correct matches if toggle is enabled
+        if (this.hideCorrectCheckbox.checked) {
+            this.hideCorrectMatches();
+        }
+
         // Reset game state for retry
         this.isSubmitted = false;
         this.retryBtn.classList.add('hidden');
