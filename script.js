@@ -30,6 +30,8 @@ class APWorldDatesGame {
         this.changePeriodBtn = document.getElementById('change-period-btn');
         this.confettiCanvas = document.getElementById('confetti-canvas');
         this.instructions = document.getElementById('instructions');
+        this.connectionsSvg = document.getElementById('connections-svg');
+        this.matchingContainer = document.querySelector('.matching-container');
     }
     
     async loadData() {
@@ -82,7 +84,45 @@ class APWorldDatesGame {
                 this.confettiCanvas.width = window.innerWidth;
                 this.confettiCanvas.height = window.innerHeight;
             }
+
+            // Redraw connection lines on resize
+            this.redrawAllConnectionLines();
         });
+    }
+
+    redrawAllConnectionLines() {
+        // Store current matches and their states
+        const currentMatches = new Map(this.matches);
+        const matchStates = new Map();
+
+        // Determine the state of each match
+        for (let [eventIndex, dateIndex] of currentMatches.entries()) {
+            const dateEl = this.findElementByOriginalIndex('date', dateIndex);
+            const eventEl = this.findElementByOriginalIndex('event', eventIndex);
+
+            if (dateEl && eventEl) {
+                if (dateEl.classList.contains('correct')) {
+                    matchStates.set(`${dateIndex}-${eventIndex}`, 'correct');
+                } else if (dateEl.classList.contains('incorrect')) {
+                    matchStates.set(`${dateIndex}-${eventIndex}`, 'incorrect');
+                } else if (dateEl.classList.contains('matched')) {
+                    matchStates.set(`${dateIndex}-${eventIndex}`, 'matched');
+                }
+            }
+        }
+
+        // Clear all lines and redraw
+        this.clearAllConnectionLines();
+
+        for (let [eventIndex, dateIndex] of currentMatches.entries()) {
+            const dateEl = this.findElementByOriginalIndex('date', dateIndex);
+            const eventEl = this.findElementByOriginalIndex('event', eventIndex);
+            const state = matchStates.get(`${dateIndex}-${eventIndex}`) || 'matched';
+
+            if (dateEl && eventEl) {
+                this.drawConnectionLine(dateEl, eventEl, state);
+            }
+        }
     }
     
     onPeriodChange(periodId) {
@@ -214,19 +254,22 @@ class APWorldDatesGame {
     createMatch() {
         const dateIndex = parseInt(this.selectedDate.dataset.originalIndex);
         const eventIndex = parseInt(this.selectedEvent.dataset.originalIndex);
-        
+
         // Remove previous matches for these items
         this.removeMatchesForItems(dateIndex, eventIndex);
-        
+
         // Create new match
         this.matches.set(eventIndex, dateIndex);
-        
+
         // Update visual state
         this.selectedDate.classList.remove('selected');
         this.selectedEvent.classList.remove('selected');
         this.selectedDate.classList.add('matched');
         this.selectedEvent.classList.add('matched');
-        
+
+        // Draw connection line
+        this.drawConnectionLine(this.selectedDate, this.selectedEvent, 'matched');
+
         // Clear selections
         this.selectedDate = null;
         this.selectedEvent = null;
@@ -237,13 +280,16 @@ class APWorldDatesGame {
         for (let [eIdx, dIdx] of this.matches.entries()) {
             if (eIdx === eventIndex || dIdx === dateIndex) {
                 this.matches.delete(eIdx);
-                
+
                 // Remove visual matching state
                 const dateEl = this.findElementByOriginalIndex('date', dIdx);
                 const eventEl = this.findElementByOriginalIndex('event', eIdx);
-                
+
                 if (dateEl) dateEl.classList.remove('matched', 'correct', 'incorrect');
                 if (eventEl) eventEl.classList.remove('matched', 'correct', 'incorrect');
+
+                // Remove connection line
+                this.removeConnectionLine(dIdx, eIdx);
             }
         }
     }
@@ -260,30 +306,40 @@ class APWorldDatesGame {
     
     submitAnswers() {
         if (this.matches.size === 0) return;
-        
+
         this.isSubmitted = true;
         let correctCount = 0;
-        
+
         // Check each match
         for (let [eventIndex, dateIndex] of this.matches.entries()) {
             const isCorrect = eventIndex === dateIndex;
-            
+
             const dateEl = this.findElementByOriginalIndex('date', dateIndex);
             const eventEl = this.findElementByOriginalIndex('event', eventIndex);
-            
+
             if (isCorrect) {
+                dateEl.classList.remove('matched');
+                eventEl.classList.remove('matched');
                 dateEl.classList.add('correct');
                 eventEl.classList.add('correct');
                 correctCount++;
+
+                // Update connection line to correct style
+                this.drawConnectionLine(dateEl, eventEl, 'correct');
             } else {
+                dateEl.classList.remove('matched');
+                eventEl.classList.remove('matched');
                 dateEl.classList.add('incorrect');
                 eventEl.classList.add('incorrect');
+
+                // Update connection line to incorrect style
+                this.drawConnectionLine(dateEl, eventEl, 'incorrect');
             }
         }
-        
+
         // Update button states
         this.submitBtn.style.display = 'none';
-        
+
         if (correctCount === this.matches.size && this.matches.size === this.currentEvents.length) {
             // All correct - show completion
             setTimeout(() => this.showCompletion(), 1000);
@@ -296,23 +352,26 @@ class APWorldDatesGame {
     retryIncorrect() {
         // Remove incorrect matches and their visual states
         const incorrectMatches = [];
-        
+
         for (let [eventIndex, dateIndex] of this.matches.entries()) {
             const dateEl = this.findElementByOriginalIndex('date', dateIndex);
             const eventEl = this.findElementByOriginalIndex('event', eventIndex);
-            
+
             if (dateEl.classList.contains('incorrect')) {
                 incorrectMatches.push([eventIndex, dateIndex]);
                 dateEl.classList.remove('incorrect', 'matched');
                 eventEl.classList.remove('incorrect', 'matched');
+
+                // Remove connection line
+                this.removeConnectionLine(dateIndex, eventIndex);
             }
         }
-        
+
         // Remove incorrect matches from the matches map
         incorrectMatches.forEach(([eventIndex]) => {
             this.matches.delete(eventIndex);
         });
-        
+
         // Reset game state for retry
         this.isSubmitted = false;
         this.retryBtn.classList.add('hidden');
@@ -325,13 +384,16 @@ class APWorldDatesGame {
         this.selectedDate = null;
         this.selectedEvent = null;
         this.isSubmitted = false;
-        
+
         // Remove all visual states
         const allItems = document.querySelectorAll('.item');
         allItems.forEach(item => {
             item.classList.remove('selected', 'matched', 'correct', 'incorrect');
         });
-        
+
+        // Clear all connection lines
+        this.clearAllConnectionLines();
+
         // Reset buttons
         this.submitBtn.style.display = 'inline-flex';
         this.retryBtn.classList.add('hidden');
@@ -467,6 +529,75 @@ class APWorldDatesGame {
         else if (e.key === 'Escape') {
             this.clearSelections();
         }
+    }
+
+    drawConnectionLine(dateElement, eventElement, type = 'matched') {
+        // Update SVG size to match container
+        this.updateSvgSize();
+
+        // Get positions relative to the matching container
+        const containerRect = this.matchingContainer.getBoundingClientRect();
+        const dateRect = dateElement.getBoundingClientRect();
+        const eventRect = eventElement.getBoundingClientRect();
+
+        // Calculate connection points
+        const startX = dateRect.right - containerRect.left;
+        const startY = dateRect.top + dateRect.height / 2 - containerRect.top;
+        const endX = eventRect.left - containerRect.left;
+        const endY = eventRect.top + eventRect.height / 2 - containerRect.top;
+
+        // Create unique ID for this connection
+        const connectionId = `connection-${dateElement.dataset.originalIndex}-${eventElement.dataset.originalIndex}`;
+
+        // Remove existing connection with same ID
+        const existingLine = this.connectionsSvg.querySelector(`#${connectionId}`);
+        if (existingLine) {
+            existingLine.remove();
+        }
+
+        // Create curved path for better visual appeal
+        const controlX1 = startX + (endX - startX) * 0.3;
+        const controlY1 = startY;
+        const controlX2 = startX + (endX - startX) * 0.7;
+        const controlY2 = endY;
+
+        const pathData = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
+
+        // Create SVG path element
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('id', connectionId);
+        path.setAttribute('d', pathData);
+        path.setAttribute('class', `connection-line ${type}`);
+        path.setAttribute('data-date-index', dateElement.dataset.originalIndex);
+        path.setAttribute('data-event-index', eventElement.dataset.originalIndex);
+
+        this.connectionsSvg.appendChild(path);
+    }
+
+    updateSvgSize() {
+        const containerRect = this.matchingContainer.getBoundingClientRect();
+        this.connectionsSvg.setAttribute('width', containerRect.width);
+        this.connectionsSvg.setAttribute('height', containerRect.height);
+    }
+
+    removeConnectionLine(dateIndex, eventIndex) {
+        const connectionId = `connection-${dateIndex}-${eventIndex}`;
+        const line = this.connectionsSvg.querySelector(`#${connectionId}`);
+        if (line) {
+            line.remove();
+        }
+    }
+
+    clearAllConnectionLines() {
+        while (this.connectionsSvg.firstChild && this.connectionsSvg.firstChild.tagName !== 'defs') {
+            if (this.connectionsSvg.firstChild.tagName === 'defs') {
+                break;
+            }
+            this.connectionsSvg.removeChild(this.connectionsSvg.firstChild);
+        }
+        // Remove all path elements but keep defs
+        const paths = this.connectionsSvg.querySelectorAll('path');
+        paths.forEach(path => path.remove());
     }
 
     clearSelections() {

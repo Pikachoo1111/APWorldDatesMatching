@@ -42,15 +42,31 @@
         </div>
 
         <div id="matching-interface" class="matching-interface hidden">
-            <div class="matching-columns">
-                <div class="dates-column">
-                    <h3 class="column-title">Dates</h3>
-                    <div id="dates-list" class="items-list dates-list"></div>
-                </div>
-                
-                <div class="events-column">
-                    <h3 class="column-title">Events</h3>
-                    <div id="events-list" class="items-list events-list"></div>
+            <div class="matching-container">
+                <!-- SVG overlay for connection lines -->
+                <svg id="connections-svg" class="connections-overlay">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                                refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--mint-green)" />
+                        </marker>
+                        <marker id="arrowhead-incorrect" markerWidth="10" markerHeight="7"
+                                refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--red-500)" />
+                        </marker>
+                    </defs>
+                </svg>
+
+                <div class="matching-columns">
+                    <div class="dates-column">
+                        <h3 class="column-title">Dates</h3>
+                        <div id="dates-list" class="items-list dates-list"></div>
+                    </div>
+
+                    <div class="events-column">
+                        <h3 class="column-title">Events</h3>
+                        <div id="events-list" class="items-list events-list"></div>
+                    </div>
                 </div>
             </div>
 
