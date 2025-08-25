@@ -395,7 +395,7 @@ class APWorldDatesGame {
         // Remove all visual states
         const allItems = document.querySelectorAll('.item');
         allItems.forEach(item => {
-            item.classList.remove('selected', 'matched', 'correct', 'incorrect', 'hidden-correct');
+            item.classList.remove('selected', 'matched', 'correct', 'incorrect', 'hidden-correct', 'fully-hidden');
         });
 
         // Clear all connection lines
@@ -439,22 +439,35 @@ class APWorldDatesGame {
     }
 
     hideCorrectMatches() {
+        const itemsToHide = [];
+
         for (let [eventIndex, dateIndex] of this.matches.entries()) {
             const dateEl = this.findElementByOriginalIndex('date', dateIndex);
             const eventEl = this.findElementByOriginalIndex('event', eventIndex);
 
             if (dateEl && eventEl && dateEl.classList.contains('correct')) {
+                // Start fade animation
                 dateEl.classList.add('hidden-correct');
                 eventEl.classList.add('hidden-correct');
 
-                // Hide the connection line
+                itemsToHide.push({ dateEl, eventEl, dateIndex, eventIndex });
+
+                // Remove the connection line immediately
                 const connectionId = `connection-${dateIndex}-${eventIndex}`;
                 const line = this.connectionsSvg.querySelector(`#${connectionId}`);
                 if (line) {
-                    line.style.opacity = '0';
+                    line.remove();
                 }
             }
         }
+
+        // After animation completes, fully hide the items
+        setTimeout(() => {
+            itemsToHide.forEach(({ dateEl, eventEl }) => {
+                dateEl.classList.add('fully-hidden');
+                eventEl.classList.add('fully-hidden');
+            });
+        }, 400); // Match the CSS transition duration
     }
 
     showAutoRetryMessage() {
@@ -490,14 +503,24 @@ class APWorldDatesGame {
     showHiddenCorrectMatches() {
         const hiddenItems = document.querySelectorAll('.item.hidden-correct');
         hiddenItems.forEach(item => {
-            item.classList.remove('hidden-correct');
+            item.classList.remove('hidden-correct', 'fully-hidden');
         });
 
-        // Show connection lines for correct matches
-        const connectionLines = this.connectionsSvg.querySelectorAll('.connection-line.correct');
-        connectionLines.forEach(line => {
-            line.style.opacity = '1';
-        });
+        // Redraw connection lines for correct matches
+        for (let [eventIndex, dateIndex] of this.matches.entries()) {
+            const dateEl = this.findElementByOriginalIndex('date', dateIndex);
+            const eventEl = this.findElementByOriginalIndex('event', eventIndex);
+
+            if (dateEl && eventEl && dateEl.classList.contains('correct')) {
+                // Check if connection line already exists
+                const connectionId = `connection-${dateIndex}-${eventIndex}`;
+                const existingLine = this.connectionsSvg.querySelector(`#${connectionId}`);
+
+                if (!existingLine) {
+                    this.drawConnectionLine(dateEl, eventEl, 'correct');
+                }
+            }
+        }
     }
 
     changePeriod() {

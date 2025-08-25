@@ -429,14 +429,12 @@ body {
 .item.hidden-correct {
     opacity: 0;
     transform: scale(0.8);
+    transition: opacity 0.4s ease, transform 0.4s ease;
     pointer-events: none;
-    transition: all 0.4s ease;
-    margin: 0;
-    padding: 0;
-    height: 0;
-    min-height: 0;
-    border: none;
-    overflow: hidden;
+}
+
+.item.hidden-correct.fully-hidden {
+    display: none;
 }
 
 .item.dragging {
