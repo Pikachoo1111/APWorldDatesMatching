@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP World History - Must Know Dates Practice</title>
+    <meta name="description" content="Interactive practice tool for AP World History students to match historical events with dates across different time periods.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">AP World History</h1>
+            <p class="subtitle">Must Know Dates Practice</p>
+        </header>
+
+        <div class="controls">
+            <div class="period-selector">
+                <label for="period-select" class="period-label">Select Period:</label>
+                <select id="period-select" class="period-dropdown">
+                    <option value="">Choose a period...</option>
+                    <option value="0">Period 0: 8000 B.C.E - 1200 C.E (Review)</option>
+                    <option value="1">Period 1: c. 1200 C.E. to c. 1450 C.E.</option>
+                    <option value="2">Period 2: c. 1450 C.E. to c. 1750 C.E.</option>
+                    <option value="3">Period 3: c. 1750 C.E. to c. 1900 C.E.</option>
+                    <option value="4">Period 4: c. 1900 C.E. to the present</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="period-info" class="period-info hidden">
+            <h2 id="period-title" class="period-title"></h2>
+            <p id="period-subtitle" class="period-subtitle"></p>
+        </div>
+
+        <div id="instructions" class="instructions hidden">
+            <p>Click on a date and then click on its matching event to create a connection. You can also drag and drop items to match them. Use the Tab key to navigate and Enter or Space to select items. Press Escape to clear your current selection.</p>
+        </div>
+
+        <div id="matching-interface" class="matching-interface hidden">
+            <div class="matching-columns">
+                <div class="dates-column">
+                    <h3 class="column-title">Dates</h3>
+                    <div id="dates-list" class="items-list dates-list"></div>
+                </div>
+                
+                <div class="events-column">
+                    <h3 class="column-title">Events</h3>
+                    <div id="events-list" class="items-list events-list"></div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="submit-btn" class="btn btn-primary" disabled>Submit Answers</button>
+                <button id="retry-btn" class="btn btn-secondary hidden">Retry Incorrect</button>
+            </div>
+        </div>
+
+        <div id="completion-state" class="completion-state hidden">
+            <div class="success-message">
+                <div class="success-icon">🎉</div>
+                <h2>Congratulations!</h2>
+                <p>You've successfully matched all the dates and events!</p>
+                <div class="completion-actions">
+                    <button id="replay-btn" class="btn btn-primary">Try Again</button>
+                    <button id="change-period-btn" class="btn btn-secondary">Change Period</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-controls">
+            <button id="clear-all-btn" class="btn btn-outline hidden">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Canvas for confetti animation -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <script src="script.js"></script>
+</body>
+</html>
