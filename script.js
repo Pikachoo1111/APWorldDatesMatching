@@ -32,6 +32,8 @@ class APWorldDatesGame {
         this.instructions = document.getElementById('instructions');
         this.connectionsSvg = document.getElementById('connections-svg');
         this.matchingContainer = document.querySelector('.matching-container');
+        this.hideCorrectToggle = document.getElementById('hide-correct-toggle');
+        this.hideCorrectCheckbox = document.getElementById('hide-correct-checkbox');
     }
     
     async loadData() {
@@ -75,6 +77,7 @@ class APWorldDatesGame {
         this.clearAllBtn.addEventListener('click', () => this.clearAll());
         this.replayBtn.addEventListener('click', () => this.replay());
         this.changePeriodBtn.addEventListener('click', () => this.changePeriod());
+        this.hideCorrectCheckbox.addEventListener('change', (e) => this.onHideCorrectToggle(e.target.checked));
     }
 
     setupResizeHandler() {
@@ -151,6 +154,7 @@ class APWorldDatesGame {
         this.matchingInterface.classList.remove('hidden');
         this.completionState.classList.add('hidden');
         this.clearAllBtn.classList.remove('hidden');
+        this.hideCorrectToggle.classList.remove('hidden');
         
         this.renderItems();
         this.updateSubmitButton();
@@ -341,10 +345,13 @@ class APWorldDatesGame {
         this.submitBtn.style.display = 'none';
 
         if (correctCount === this.matches.size && this.matches.size === this.currentEvents.length) {
-            // All correct - show completion
+            // All matches are correct and complete - show completion
             setTimeout(() => this.showCompletion(), 1000);
+        } else if (correctCount === this.matches.size && this.matches.size < this.currentEvents.length) {
+            // All submitted matches are correct but some items are unmatched - auto continue
+            setTimeout(() => this.autoRetryPartialCorrect(), 1500);
         } else {
-            // Some incorrect - show retry option
+            // Some incorrect matches - show retry option
             this.retryBtn.classList.remove('hidden');
         }
     }
@@ -388,7 +395,7 @@ class APWorldDatesGame {
         // Remove all visual states
         const allItems = document.querySelectorAll('.item');
         allItems.forEach(item => {
-            item.classList.remove('selected', 'matched', 'correct', 'incorrect');
+            item.classList.remove('selected', 'matched', 'correct', 'incorrect', 'hidden-correct');
         });
 
         // Clear all connection lines
@@ -411,16 +418,99 @@ class APWorldDatesGame {
     
     replay() {
         this.completionState.classList.add('hidden');
+        // Reset the toggle
+        this.hideCorrectCheckbox.checked = false;
         this.onPeriodChange(this.currentPeriod);
     }
     
+    autoRetryPartialCorrect() {
+        // Hide correct matches if toggle is enabled
+        if (this.hideCorrectCheckbox.checked) {
+            this.hideCorrectMatches();
+        }
+
+        // Reset game state for continuing
+        this.isSubmitted = false;
+        this.submitBtn.style.display = 'inline-flex';
+        this.updateSubmitButton();
+
+        // Show a brief message
+        this.showAutoRetryMessage();
+    }
+
+    hideCorrectMatches() {
+        for (let [eventIndex, dateIndex] of this.matches.entries()) {
+            const dateEl = this.findElementByOriginalIndex('date', dateIndex);
+            const eventEl = this.findElementByOriginalIndex('event', eventIndex);
+
+            if (dateEl && eventEl && dateEl.classList.contains('correct')) {
+                dateEl.classList.add('hidden-correct');
+                eventEl.classList.add('hidden-correct');
+
+                // Hide the connection line
+                const connectionId = `connection-${dateIndex}-${eventIndex}`;
+                const line = this.connectionsSvg.querySelector(`#${connectionId}`);
+                if (line) {
+                    line.style.opacity = '0';
+                }
+            }
+        }
+    }
+
+    showAutoRetryMessage() {
+        // Create a temporary message
+        const message = document.createElement('div');
+        message.className = 'auto-retry-message';
+        message.innerHTML = `
+            <div style="background-color: var(--green-100); border: 2px solid var(--green-500);
+                        color: var(--green-500); padding: 1rem; border-radius: var(--border-radius);
+                        margin: 1rem 0; text-align: center; font-weight: 500;">
+                Great! All your matches are correct. ${this.hideCorrectCheckbox.checked ? 'Correct matches hidden. ' : ''}Continue matching the remaining items.
+            </div>
+        `;
+
+        const actionButtons = document.querySelector('.action-buttons');
+        actionButtons.parentNode.insertBefore(message, actionButtons);
+
+        // Remove message after 3 seconds
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 3000);
+    }
+
+    onHideCorrectToggle(isChecked) {
+        if (!isChecked) {
+            // Show all hidden correct matches
+            this.showHiddenCorrectMatches();
+        }
+    }
+
+    showHiddenCorrectMatches() {
+        const hiddenItems = document.querySelectorAll('.item.hidden-correct');
+        hiddenItems.forEach(item => {
+            item.classList.remove('hidden-correct');
+        });
+
+        // Show connection lines for correct matches
+        const connectionLines = this.connectionsSvg.querySelectorAll('.connection-line.correct');
+        connectionLines.forEach(line => {
+            line.style.opacity = '1';
+        });
+    }
+
     changePeriod() {
         this.completionState.classList.add('hidden');
         this.matchingInterface.classList.add('hidden');
         this.periodInfo.classList.add('hidden');
         this.instructions.classList.add('hidden');
         this.clearAllBtn.classList.add('hidden');
+        this.hideCorrectToggle.classList.add('hidden');
         this.periodSelect.value = '';
+
+        // Reset toggle
+        this.hideCorrectCheckbox.checked = false;
     }
     
     shuffleArray(array) {
