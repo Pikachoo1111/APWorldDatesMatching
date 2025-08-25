@@ -5,7 +5,11 @@ An interactive web application for AP World History students to practice matchin
 ## Features
 
 - **Period-Based Learning**: Filter content by AP World History periods (0-4)
+- **Visual Connection Lines**: Animated curved lines connect matched items with color-coded feedback
 - **Interactive Matching**: Drag-and-drop or click-to-connect interface
+- **Smart Auto-Retry**: Automatically continues when all submitted matches are correct but items remain unmatched
+- **Hide Correct Matches**: Toggle switch to hide correct matches and focus on remaining items
+- **Enhanced Feedback**: Red boxes with X marks, shake animations, and visual pulses for incorrect matches
 - **Immediate Feedback**: Color-coded responses (green for correct, red for incorrect)
 - **Retry System**: Focus on incorrect matches without losing progress
 - **Celebratory Completion**: Mint green confetti animation upon success
@@ -15,13 +19,17 @@ An interactive web application for AP World History students to practice matchin
 ## How to Use
 
 1. Select a historical period from the dropdown menu
-2. Match dates with their corresponding events by:
+2. **Optional**: Toggle "Hide correct matches" to automatically hide correct answers after each submission
+3. Match dates with their corresponding events by:
    - **Desktop**: Drag and drop items between columns
    - **Mobile/Touch**: Tap a date, then tap its matching event
    - **Keyboard**: Use Tab to navigate, Enter/Space to select, Escape to clear
-3. Click "Submit Answers" to check your matches
-4. Review feedback and retry incorrect matches if needed
-5. Celebrate when you get them all right! 🎉
+4. Watch as **animated connection lines** appear between your matched items
+5. Click "Submit Answers" to check your matches
+6. **Smart Auto-Retry**: If all your matches are correct but some items remain, the game automatically continues
+7. Review feedback with **enhanced visual cues** (red boxes with X marks for incorrect matches)
+8. Retry incorrect matches or continue with remaining items
+9. Celebrate when you get them all right! 🎉
 
 ## Historical Periods Covered
 
